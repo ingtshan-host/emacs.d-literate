@@ -150,4 +150,4 @@
 
 ** Reference
 
-   - [Master Emacs in 21 Days][http://book.emacs-china.org/#orgheadline2]
+   - [[http://book.emacs-china.org/#orgheadline2][Master Emacs in 21 Days]]
