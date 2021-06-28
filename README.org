@@ -4,12 +4,10 @@ Use org-babel-tangle to convert org into several elisp file, which content the c
 
 ** How to use?
 
-After installing Emacs
+Install Emacs
 
 #+BEGIN_SRC shell
   $ git clone git@github.com:ingtshan/emacs-configuration-in-org.git ~/.emacs.d
-  $ cd ~/.emacs.d
-  $ mkdir lisp
 #+END_SRC
 
-Launch Emacs
+Launch Emacs ;-)
