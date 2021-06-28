@@ -17,6 +17,9 @@
 (org-babel-load-file
  (expand-file-name
   (concat user-emacs-directory "config.org")))
+(org-babel-tangle-file
+ (expand-file-name
+  (concat user-emacs-directory "config.org")))
 
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (require 'my-tool)
