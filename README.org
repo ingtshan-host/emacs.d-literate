@@ -1,0 +1,12 @@
+* Emacs‘ configuration All in Org
+
+  Use org-babel-tangle to conver org into several elisp file, which content the codes of code block to init my emacs.
+
+  ** How to use?
+  After installing Emacs
+  #+BEGIN_SRC shell
+    $ git clone ... to ~/.emacs.d
+    $ cd ~/.emacs.d
+    $ mkdir lisp
+  #+END_SRC
+  Lunch Emacs

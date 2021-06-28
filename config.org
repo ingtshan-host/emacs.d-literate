@@ -1,0 +1,150 @@
+* ingtshan's emacs config
+
+** 配置使用指南
+   
+    #+BEGIN_SRC emacs-lisp
+    ;; all in one file
+    #+END_SRC
+
+   配置修改后如何生效？
+
+   对于单条语句修改，执行 `C-x C-e` 即可
+
+   对于单文件修改，执行 `C-c C-v t` runs the command org-babel-tangle 生成对应的 lisp 文件
+   然后执行 `M-x load-file` load 对应的 lisp 文件
+
+   对于多文件修改，目前只有重启 emacs (为何 load init.el 不行？因为配置模块化，使用了'require')
+   
+** 配置启动 init.el
+
+   #+BEGIN_SRC emacs-lisp :tangle init.el
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;;                                                                          ;;
+     ;;           ingtshan's emacs init file                                     ;;
+     ;;                                                                          ;;
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;; Initialise the emacs packages in case any of them overrides
+     ;; built-in Emacs packages.
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     (package-initialize)
+
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     ;; All in one org file
+     ;; organize config with outline.
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     (org-babel-load-file
+      (expand-file-name
+       (concat user-emacs-directory "config.org")))
+   #+END_SRC
+
+** 配置入口 init.el
+
+   #+BEGIN_SRC emacs-lisp :tangle init.el
+     (add-to-list 'load-path "~/.emacs.d/lisp/")
+     (require 'my-tool)
+     (require 'init-ui)
+     (require 'init-editor)
+   #+END_SRC
+
+** 模块化配置
+
+*** 配置模块：工具代码 my-tool.el
+
+    autoload says "if this function isn't already defined, then load this file (if and when the function is called)."
+
+    require says "if this library isn't already loaded, then load this file (immediately)."
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/my-tool.el
+      ;; 快速打开配置文件
+      (defun my/open-config-file()
+	(interactive)
+	(find-file "~/.emacs.d/config.org"))
+
+      ;; 这一行代码，将函数 open-init-file 绑定到 <f2> 键上
+      (global-set-key (kbd "<f2>") 'my/open-config-file)
+    #+END_SRC
+
+    下面的代码可以一次重新缩进全部缓冲区的代码。（之后也会介绍更好用的，代码格式美化 的插件）
+
+    然后再将其绑定为快捷键，第一个 \ 用于将紧跟的 \ 进行逃脱（escape）
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/my-tool.el
+      (defun my/indent-buffer()
+	(interactive)
+	(indent-region (point-min) (point-max)))
+
+      (defun my/indent-region-or-buffer()
+	(interactive)
+	(save-excursion
+	  (if (region-active-p)
+	      (progn
+		(indent-region (region-beginning) (region-end))
+		(message "Indent selected region."))
+	    (progn
+	      (my/indent-buffer)
+	      (message "Indent buffer.")))))
+
+      (global-set-key (kbd "C-M-\\") 'my/indent-region-or-buffer)
+    #+END_SRC
+
+    文件尾
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/my-tool.el
+      (provide 'my-tool)
+    #+END_SRC
+
+*** 配置模块：编辑器界面 init-ui.el
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/init-ui.el
+      (tool-bar-mode -1)    ;;关闭工具栏
+      (scroll-bar-mode -1)  ;;关闭滚动条
+      (global-linum-mode t) ;;全局显示行号
+      (global-hl-line-mode -1) ;;开启全局高亮当前行
+      (setq-default cursor-type 'bar) ;;光标样式
+      (setq inhibit-splash-screen 1) ;; 关闭启动帮助画面
+      (provide 'init-ui)
+    #+END_SRC
+*** 配置模块：编辑器优化 init-editor.el
+
+    更好多默认设置
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/init-editor.el
+      ;;最近文件
+      (require 'recentf)
+      (recentf-mode 1)
+      (setq recentf-max-menu-item 10)
+
+      (setq make-backup-files nil) ;;关闭自动生成~备份文件
+      (setq auto-save-default nil) ;;关闭自动保存文件
+      (global-auto-revert-mode 1) ;;Emacs 自动加载外部修改过的文件
+      (setq ring-bell-function 'ignore) ;;关闭 Emacs 中的警告音
+      (fset 'yes-or-no-p 'y-or-n-p) ;;简化 yes no 为 y n
+      (delete-selection-mode 1) ;;
+    #+END_SRC
+
+    上面使用 `(delete-selection-mode 1)` 将删除功能配置成与其他图形界面的编辑器相同。
+    即当你选中一段文字 之后输入一个字符会替换掉你选中部分的文字
+
+    更好多编辑体验
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/init-editor.el
+      ;;启用自动括号匹配（Highlight Matching Parenthesis）
+      (add-hook 'emacs-lisp-mode-hook 'show-paren-mode)
+      (add-hook 'org-mode-hook 'show-paren-mode)
+
+      ;;添加 Org-mode 文本内语法高亮
+      (require 'org)
+      (setq org-src-fontify-natively t)
+    #+END_SRC
+
+    文件尾
+
+    #+BEGIN_SRC emacs-lisp :tangle lisp/init-editor.el
+      (provide 'init-editor)
+    #+END_SRC
+
+** Reference
+
+   - [Master Emacs in 21 Days][http://book.emacs-china.org/#orgheadline2]
