@@ -1,6 +1,6 @@
 # -*- lexical-binding: t; -*-
 #+STARTUP: overview
-#+Title: ingtshan Emacs Config main
+#+Title: Emacs Config 
 * How to use
   my version of =emacs= of mac
   #+begin_src sh
