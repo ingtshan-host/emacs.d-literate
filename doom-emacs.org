@@ -1,0 +1,858 @@
+#+title: 配置文件 doom-emacs
+#+startup: overview
+* Doom load order
+#+begin_src elisp
+;; Now we load all enabled modules in the order dictated by your `doom!' block
+;; in $DOOMDIR/init.el. `doom-initialize-modules' loads them (and hooks) in the
+;; given order:
+;;
+;;   $DOOMDIR/init.el
+;;   {$DOOMDIR,~/.emacs.d}/modules/*/*/init.el
+;;   `doom-before-init-modules-hook'
+;;   {$DOOMDIR,~/.emacs.d}/modules/*/*/config.el
+;;   `doom-init-modules-hook'
+;;   $DOOMDIR/config.el
+;;   `doom-after-init-modules-hook'
+;;   `after-init-hook'
+;;   `emacs-startup-hook'
+;;   `doom-init-ui-hook'
+;;   `window-setup-hook'
+;;
+;; And then we're good to go!
+#+end_src
+* Config Env Set Up
+=.doom.d/init.el= which controls what =Doom modules= are enabled and what =order= they load in
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/init.el
+;; -*- lexical-binding: t; -*-
+;;; init.el
+(doom!  ; begin of doom module list
+#+end_src
+=.doom.d/config.el= which stores customer configuration
+#+begin_src elisp :tangle .local/.doom.d/config.el
+;; -*- lexical-binding: t; -*-
+;;; config.el
+(defvar my-device-name "default"
+  "For multi-device setup, you can customer it in ~/.emacs")
+#+end_src
+=.doom.d/packages.el= where install package with Doom
+#+begin_src elisp :tangle .local/.doom.d/packages.el
+;; -*- no-byte-compile: t; -*-
+;;; packages.el
+#+end_src
+* =Doom Customer Setup=
+** package-archives and proxy
+#+begin_src elisp :tangle .local/.doom.d/config.el
+(setq package-archives
+	     '(("melpa" . "https://melpa.org/packages/")
+	       ("melpa-stable" . "https://stable.melpa.org/packages/")
+	       ("org" . "https://orgmode.org/elpa/")
+	       ("gnu" . "https://elpa.gnu.org/packages/")
+	       ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+
+(setq url-proxy-services
+	  '(("http" . "127.0.0.1:8889")
+	    ("https" . "127.0.0.1:8889")))
+#+end_src
+** user-info
+#+begin_src elisp :tangle .local/.doom.d/config.el
+;; Some functionality uses this to identify you, e.g. GPG configuration, email
+;; clients, file templates and snippets.
+(setq user-full-name "ingtshan"
+      user-mail-address "john@doe.com")
+#+end_src
+** theme
+#+begin_src elisp :tangle .local/.doom.d/config.el
+(setq doom-theme 'doom-one)
+(setq display-line-numbers-type t)
+#+end_src
+** multi-device setup
+*** multi con code template
+#+begin_src elisp
+ (cond
+   ((string-equal my-device-name "default")
+
+    ) ;end of default
+   ((string-equal my-device-name "pokeball")
+
+    ) ;end of pokeball
+   ((string-equal my-device-name "superme")
+
+    ) ;end of superme
+   (t
+    ) ; end of unkonw
+   )
+#+end_src
+*** frame resize and move function
+#+begin_src elisp :tangle .local/.doom.d/config.el
+(defun +my/frame-move-resize (x y w h)
+  (set-frame-position (selected-frame) x y)
+  (set-frame-height (selected-frame) h)
+  (set-frame-width (selected-frame) w))
+
+(defun +my/frame-move-right-thin ()
+ (cond
+   ((string-equal my-device-name "default")
+
+    ) ;end of default
+   ((string-equal my-device-name "pokeball")
+    (+my/frame-move-resize 950 0 40 80)
+    ) ;end of pokeball
+   ((string-equal my-device-name "superme")
+
+    ) ;end of superme
+   (t
+    ) ; end of unkonw
+   ))
+#+end_src
+*** frame and font init
+- frame init
+- font setup
+#+begin_src elisp :tangle .local/.doom.d/config.el
+(when window-system
+  (let ( ; begin of local statement
+      ;; font
+      (+font-init
+       (lambda (en zh)
+         (set-face-attribute
+          'default nil
+          :font (font-spec :name "-*-Monaco-normal-normal-normal-*-*-*-*-*-m-0-iso10646-1"
+		           :weight 'normal
+		           :slant 'normal
+		           :size en))
+         (dolist (charset '(kana han symbol cjk-misc bopomofo))
+           (set-fontset-font
+            (frame-parameter nil 'font) charset
+            (font-spec :name "-*-HYKaiTiJ-normal-normal-normal-*-*-*-*-*-p-0-iso10646-1"
+		               :weight 'normal
+		               :slant 'normal
+		               :size zh)))))
+      ) ; end of local statement
+  (cond
+   ((string-equal my-device-name "default")
+    (message "Default device")
+    (+my/frame-move-resize 150 0 115 42)
+    (funcall +font-init 14 16.5)
+    ) ;end of default
+   ((string-equal my-device-name "pokeball")
+    (message "Pokeball setup!")
+    (+my/frame-move-resize 0 0 132 62)
+    (funcall +font-init 14 16.5)
+    (with-eval-after-load 'rime
+      (setq rime-posframe-properties
+        (list :background-color "#333333"
+              :foreground-color "#dcdccc"
+              :font "Sarasa Mono SC Nerd-14"
+              :internal-border-width 10)))
+    ) ;end of pokeball
+   ((string-equal my-device-name "superme")
+    (message "Superme Setup!")
+    ;; left top of my second screen
+    (+my/frame-move-resize 1440 0 230 160)
+    (funcall +font-init 16 20)
+    (with-eval-after-load 'rime
+      (setq rime-posframe-properties
+        (list :background-color "#333333"
+              :foreground-color "#dcdccc"
+              :font "Sarasa Mono SC Nerd-18"
+              :internal-border-width 10)))
+    ) ;end of superme
+   (t
+    (message "Unkonw device!")
+    (+my/frame-move-resize 0 0 115 42))
+   )))
+#+end_src
+
+**** Reference
+- [[https://emacs.stackexchange.com/questions/51562/are-local-nested-functions-possible-in-elisp][Are local nested functions possible in elisp? \- Emacs Stack Exchange]]
+* =Doom Public Modules=
+** input
+#+begin_src elisp
+:input
+       ;;chinese
+       ;;japanese
+       ;;layout            ; auie,ctsrnm is the superior home row
+#+end_src
+** completion
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:completion
+        company           ; the ultimate code completion backend
+        ivy               ; a search engine for love and life
+       ;;vertico           ; the search engine of the future
+       ;;helm              ; the *other* search engine for love and life
+       ;;ido               ; the other *other* search engine...
+#+end_src
+=C-x C-f= excute =company-file= to commplet file path
+** ui
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:ui
+        deft              ; notational velocity for Emacs
+        doom              ; what makes DOOM look the way it does
+        doom-dashboard    ; a nifty splash screen for Emacs
+        doom-quit         ; DOOM quit-message prompts when you quit Emacs
+        (emoji +unicode)  ; 🙂
+        hl-todo           ; highlight TODO/FIXME/NOTE/DEPRECATED/HACK/REVIEW
+        indent-guides     ; highlighted indent columns
+        ligatures         ; ligatures and symbols to make your code pretty again
+        modeline          ; snazzy, Atom-inspired modeline, plus API
+        nav-flash         ; blink cursor line after big motions
+        ophints           ; highlight the region an operation acts on
+        (popup +defaults)   ; tame sudden yet inevitable temporary windows
+        tabs              ; a tab bar for Emacs
+        treemacs          ; a project drawer, like neotree but cooler
+        vc-gutter         ; vcs diff in the fringe
+        vi-tilde-fringe   ; fringe tildes to mark beyond EOB
+        window-select     ; visually switch windows
+        workspaces        ; tab emulation, persistence & separate workspaces
+        zen               ; distraction-free coding or writing
+       ;;hydra
+       ;;minimap           ; show a map of the code on the side
+       ;;neotree           ; a project drawer, like NERDTree for vim
+       ;;unicode           ; extended unicode support for various languages
+#+end_src
+config
+#+begin_src elisp :tangle .local/.doom.d/config.el
+;; enable hl-todo also in org-mode
+(add-hook 'org-mode-hook 'hl-todo-mode)
+#+end_src
+** editor
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:editor
+        (evil +everywhere); come to the dark side, we have cookies
+        file-templates    ; auto-snippets for empty files
+        fold              ; (nigh) universal code folding
+        (format +onsave)  ; automated prettiness
+        ;;god               ; run Emacs commands without modifier keys
+        multiple-cursors  ; editing in many places at once
+        rotate-text       ; cycle region at point between text candidates
+        snippets          ; my elves. They type so I don't have to
+        word-wrap         ; soft wrapping with language-aware indent
+#+end_src
+config
+#+begin_src elisp :tangle .local/.doom.d/config.el
+;; Directory where `yasnippet' will search for your private snippets.
+(setq +snippets-dir (expand-file-name "~/dotfiles/profile/emacs-plugin/yasnippet"))
+#+end_src
+** emacs
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:emacs
+        dired             ; making dired pretty [functional]
+        electric          ; smarter, keyword-based electric-indent
+        ;;ibuffer         ; interactive buffer management
+        undo              ; persistent, smarter undo for your inevitable mistakes
+        vc                ; version-control and Emacs, sitting in a tree
+#+end_src
+** term
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:term
+       ;;eshell            ; the elisp shell that works everywhere
+       shell             ; simple shell REPL for Emacs
+       ;;term              ; basic terminal emulator for Emacs
+       ;;vterm             ; the best terminal emulation in Emacs
+#+end_src
+** checkers
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:checkers
+       ;;syntax              ; tasing you for every semicolon you forget
+       (spell +flyspell) ; tasing you for misspelling mispelling
+       ;;grammar           ; tasing grammar mistake every you make
+#+end_src
+make sure =aspell= (or other spell check engine) is install in system.
+    - install by brew like this ~brew install aspell~
+#+begin_src elisp :tangle .local/.doom.d/config.el
+;; use American English as ispell default dictionary
+(with-eval-after-load 'ispell
+  (ispell-change-dictionary "american" t)
+  (setq ispell-personal-dictionary
+      (file-truename "~/dotfiles/profile/emacs-plugin/ispell/personal-word-list")))
+
+(defun my/spell-save-word ()
+  (interactive)
+  (let ((current-location (point))
+         (word (flyspell-get-word)))
+    (when (consp word)
+      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location)
+      (message "correct word =%s=" (car word)))))
+#+end_src
+**** Reference
+- [[https://emacs.stackexchange.com/questions/17237/in-emacs-where-is-ispells-personal-dictionary-stored][In Emacs, where is ispell's personal dictionary stored? \- Emacs Stack Exchange]]
+- [[https://stackoverflow.com/questions/22107182/in-emacs-flyspell-mode-how-to-add-new-word-to-dictionary][aquamacs \- in Emacs flyspell\-mode, how to add new word to dictionary? \- Stack Overflow]]
+** tools
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:tools
+       ;;ansible
+       ;;debugger          ; FIXME stepping through code, to help you add bugs
+       ;;direnv
+       ;;docker
+       ;;editorconfig      ; let someone else argue about tabs vs spaces
+       ;;ein               ; tame Jupyter notebooks with emacs
+       (eval +overlay)     ; run code, run (also, repls)
+       ;;gist              ; interacting with github gists
+       lookup              ; navigate your code and its documentation
+       ;;lsp               ; M-x vscode
+       magit             ; a git porcelain for Emacs
+       ;;make              ; run make tasks from Emacs
+       ;;pass              ; password manager for nerds
+       ;;pdf               ; pdf enhancements
+       ;;prodigy           ; FIXME managing external services & code builders
+       ;;rgb               ; creating color strings
+       ;;taskrunner        ; taskrunner for all your projects
+       ;;terraform         ; infrastructure as code
+       ;;tmux              ; an API for interacting with tmux
+       ;;upload            ; map local to remote projects via ssh/ftp
+#+end_src
+** os
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:os
+       (:if IS-MAC macos)  ; improve compatibility with macOS
+       ;;tty               ; improve the terminal Emacs experience
+#+end_src
+** lang
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:lang
+       emacs-lisp        ; drown in parentheses
+       (org              ; organize your plain life in plain text
+           +roam2)       ; org-roam v2
+       markdown          ; writing docs for people to ignore
+       sh                ; she sells {ba,z,fi}sh shells on the C xor
+       yaml              ; JSON, but readable
+#+end_src
+*** remain list
+#+begin_src elisp
+       ;;agda              ; types of types of types of types...
+       ;;beancount         ; mind the GAAP
+       ;;cc                ; C > C++ == 1
+        ;;clojure           ; java with a lisp
+       ;;common-lisp       ; if you've seen one lisp, you've seen them all
+       ;;coq               ; proofs-as-programs
+       ;;crystal           ; ruby at the speed of c
+       ;;csharp            ; unity, .NET, and mono shenanigans
+       ;;data              ; config/data formats
+       ;;(dart +flutter)   ; paint ui and not much else
+       ;;elixir            ; erlang done right
+       ;;elm               ; care for a cup of TEA?
+       ;;erlang            ; an elegant language for a more civilized age
+       ;;ess               ; emacs speaks statistics
+       ;;factor
+       ;;faust             ; dsp, but you get to keep your soul
+       ;;fsharp            ; ML stands for Microsoft's Language
+       ;;fstar             ; (dependent) types and (monadic) effects and Z3
+       ;;gdscript          ; the language you waited for
+       ;;(go +lsp)         ; the hipster dialect
+       ;;(haskell +dante)  ; a language that's lazier than I am
+       ;;hy                ; readability of scheme w/ speed of python
+       ;;idris             ; a language you can depend on
+       ;;json              ; At least it ain't XML
+       ;;(java +meghanada) ; the poster child for carpal tunnel syndrome
+       ;;javascript        ; all(hope(abandon(ye(who(enter(here))))))
+       ;;julia             ; a better, faster MATLAB
+       ;;kotlin            ; a better, slicker Java(Script)
+       ;;latex             ; writing papers in Emacs has never been so fun
+       ;;lean              ; for folks with too much to prove
+       ;;ledger            ; be audit you can be
+       ;;lua               ; one-based indices? one-based indices
+       ;;nim               ; python + lisp at the speed of c
+       ;;nix               ; I hereby declare "nix geht mehr!"
+       ;;ocaml             ; an objective camel
+       ;;php               ; perl's insecure younger brother
+       ;;plantuml          ; diagrams for confusing people more
+       ;;purescript        ; javascript, but functional
+       ;;python            ; beautiful is better than ugly
+       ;;qt                ; the 'cutest' gui framework ever
+       ;;racket            ; a DSL for DSLs
+       ;;raku              ; the artist formerly known as perl6
+       ;;rest              ; Emacs as a REST client
+       ;;rst               ; ReST in peace
+       ;;(ruby +rails)     ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
+       ;;rust              ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
+       ;;scala             ; java, but good
+       ;;(scheme +guile)   ; a fully conniving family of lisps
+       ;;sml
+       ;;solidity          ; do you need a blockchain? No.
+       ;;swift             ; who asked for emoji variables?
+       ;;terra             ; Earth and Moon in alignment for performance.
+       ;;web               ; the tubes
+       ;;zig               ; C, but simpler
+#+end_src
+** app
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:email
+       ;;(mu4e +gmail)
+       ;;notmuch
+       ;;(wanderlust +gmail)
+
+:app
+       ;;calendar
+       ;;emms
+       ;;everywhere        ; *leave* Emacs!? You must be joking
+       ;;irc               ; how neckbeards socialize
+       ;;(rss +org)        ; emacs as an RSS reader
+       ;;twitter           ; twitter client https://twitter.com/vnought
+
+:config
+       ;;literate
+       (default +bindings +smartparens)
+#+end_src
+* =My Private Modules=
+** my-input 输入法
+*** =module list=
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:my-input
+         rime      ; chinese input method (check librime first)
+#+end_src
+*** rime
+install rime in oxs [[https://github.com/DogLooksGood/emacs-rime/blob/master/INSTALLATION.org][emacs-rime install mannul]]
+#+begin_src shell
+curl -L -O https://github.com/rime/librime/releases/download/1.7.2/rime-1.7.2-osx.zip
+unzip rime-1.7.2-osx.zip -d ~/.emacs.d/librime
+rm rime-1.7.2-osx.zip
+#+end_src
+config
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-input/rime/config.el
+;; -*- lexical-binding: t; -*-
+;; my-input/rime/config.el
+(use-package! rime
+  :after-call after-find-file pre-command-hook
+  :init
+  (require 'posframe)
+  :custom
+  (rime-librime-root "~/dotfiles/profile/emacs-plugin/librime-1.7.2-osx/dist")
+  (rime-user-data-dir "~/.emacs.d/.local/etc/rime")
+  (default-input-method "rime")
+  (rime-show-candidate 'posframe))
+;; add cn-num
+(use-package! cn-num)
+#+end_src
+packages list
+#+begin_src elisp :tangle .local/.doom.d/modules/my-input/rime/packages.el
+;; -*- no-byte-compile: t; -*-
+;; my-input/rime/packages.el
+;; (package! liberime)
+(package! rime)
+(package! cn-num
+  :recipe (:host github :repo "zhcosin/cn-num"))
+#+end_src
+autoload
+#+begin_src elisp :tangle .local/.doom.d/modules/my-input/rime/autoload.el
+;; -*- lexical-binding: t; -*-
+;; my-input/rime/autoload.el
+;;;###autoload
+(defun cn-num--year-chinese (str)
+  (let ((replace
+         (lambda (what with in)
+           (replace-regexp-in-string
+            (regexp-quote what) with in nil 'literal))
+         ))
+    (setq str (funcall replace "0" "零" str))
+    (setq str (funcall replace "1" "一" str))
+    (setq str (funcall replace "2" "二" str))
+    (setq str (funcall replace "3" "三" str))
+    (setq str (funcall replace "4" "四" str))
+    (setq str (funcall replace "5" "伍" str))
+    (setq str (funcall replace "6" "六" str))
+    (setq str (funcall replace "7" "七" str))
+    (setq str (funcall replace "8" "八" str))
+    (setq str (funcall replace "9" "九" str))))
+
+;;;###autoload
+(defun cn-num--convert-chinese (str)
+  (let ((num
+         (string-to-number str)
+         ))
+    ;; 单独处理 10-19
+    (cond ((eq num 10) "十")
+          ((eq num 11) "十一")
+          ((eq num 12) "十二")
+          ((eq num 13) "十三")
+          ((eq num 14) "十四")
+          ((eq num 15) "十五")
+          ((eq num 16) "十六")
+          ((eq num 17) "十七")
+          ((eq num 18) "十八")
+          ((eq num 19) "十九")
+          (t (cn-num--convert-arabic-to-chinese num)))
+    ))
+#+end_src
+** my-improve 优化体验
+*** =module list=
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:my-improve
+        happy-hacking      ; helping me hacking emacs and doom
+        my-key             ; customer key binding
+#+end_src
+*** happy-hacking
+**** packages, variables, and filehead setup
+packages list
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-improve/happy-hacking/packages.el
+;; -*- no-byte-compile: t; -*-
+;;; my-improve/happy-hacking/packages.el
+(package! org-superstar) ; for org improvement
+#+end_src
+variables
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-improve/happy-hacking/config.el
+;; -*- lexical-binding: t; -*-
+;;; my-improve/happy-hacking/config.el
+#+end_src
+autoload
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-note-sys/my-capture/autoload.el
+;;; my-note-sys/my-capture/autoload.el -*- lexical-binding: t; -*-
+#+end_src
+**** auto-tangle
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/config.el
+(with-eval-after-load 'org
+  ;; add hook only in org-mode
+  (add-hook 'org-mode-hook
+            (lambda () (add-hook 'after-save-hook #'org-babel-auto-tangle))))
+#+end_src
+function
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/autoload.el
+;;;###autoload
+(defun org-babel-auto-tangle ()
+  (when ( string-match-p
+          (expand-file-name "~/dotfiles/config/.*org")
+          (buffer-file-name))
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle)))
+  (when (and
+         (string-match-p
+          (expand-file-name "~/dotfiles/config/doom-emacs.org")
+          (buffer-file-name))
+         (y-or-n-p "reload doom now?"))
+    (doom/reload)))
+#+end_src
+**** org-improve
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/config.el
+(with-eval-after-load 'org-superstar
+  (setq org-superstar-headline-bullets-list
+        '(;; Original ones nicked from org-bullets
+          ?✿
+          ?✸
+          ?◉
+          ?▷)))
+
+(with-eval-after-load 'org
+  (setq
+   org-startup-indented t
+   org-pretty-entities t
+   org-ellipsis " ▼"
+   org-hide-emphasis-markers t
+   org-insert-heading-respect-content nil
+   org-src-tab-acts-natively t)
+  (require 'org-superstar)
+  (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1))))
+
+;; improve yasnippet tab
+(setq yas-indent-line 'none)
+;; (add-hook 'yas-before-expand-snippet-hook
+;;          #'(lambda () (setq org-src-tab-acts-natively nil)))
+;; (add-hook 'yas-after-exit-snippet-hook
+;;          #'(lambda () (setq org-src-tab-acts-natively t)))
+#+end_src
+**** enable-org-habit
+confg
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/config.el
+     (with-eval-after-load 'org
+       (require 'org-habit)
+       (add-to-list 'org-modules 'org-habit t)
+       (setq org-habit-show-only-for-today t
+	         org-habit-show-done-always-green t))
+#+end_src
+**** minibuffer-with-mouse
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/config.el
+;; when mouse leave minibuffer kill it
+(add-hook 'mouse-leave-buffer-hook 'my-improve-stop-using-minibuffer)
+#+end_src
+functional
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/autoload.el
+;;;###autoload
+(defun my-improve-stop-using-minibuffer ()
+      "kill the minibuffer"
+      (when (and (>= (recursion-depth) 1)
+      (active-minibuffer-window))
+      (abort-recursive-edit)))
+#+end_src
+**** my-term
+functional
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/happy-hacking/autoload.el
+;;;###autoload
+(defun my/term ()
+  "Switch to buffer other frame of term"
+  (interactive)
+  (let ((buffer-name "*terminal*"))
+    (unless (get-buffer buffer-name)
+      (set-buffer (make-term "terminal" "/bin/zsh"))
+      (with-current-buffer buffer-name
+        (term-mode)
+        (term-char-mode)
+        (term-send-input)
+        ))
+    (switch-to-buffer-other-frame buffer-name)
+    (+my/frame-move-right-thin)))
+;;;###autoload
+(defun my/term-here ()
+  "cd current directory in emacs term"
+  (interactive)
+  (let ((dir default-directory))
+    (my/term)
+    (with-current-buffer "*terminal*"
+        (term-send-raw-string "\C-c")
+        (term-send-raw-string (format "cd %s && pwd\n" dir)))))
+;;;###autoload
+(defun my/term-here-local ()
+  "cd .local of current directory in emacs term"
+  (interactive)
+  (let ((dir default-directory))
+    (my/term)
+    (with-current-buffer "*terminal*"
+        (term-send-raw-string "\C-c")
+        (term-send-raw-string (format "cd %s.local/ && pwd\n" dir)))))
+#+end_src
+***** Reference
+- [[id:1ce6a529-c0f1-4719-9e86-ccd70e41b24a][create new frame and run term in right]]
+- [[id:e0cb9359-ffec-4a05-90f3-7af137190918][get current path and cd in term]]
+*** my-key
+**** packages, variables, and filehead setup
+packages list
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-improve/my-key/packages.el
+;;; my-improve/my-key/packages.el -*- no-byte-compile: t; -*-
+#+end_src
+variables
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-improve/my-key/config.el
+;;; my-improve/my-key/config.el -*- lexical-binding: t; -*-
+#+end_src
+autoload
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-improve/my-key/autoload.el
+;;; my-improve/my-key/autoload.el -*- lexical-binding: t; -*-
+#+end_src
+**** mouse with shit to select
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-improve/my-key/config.el
+;; use shift to extend select
+(global-set-key (kbd "<S-down-mouse-1>")
+                #'mouse-save-then-kill)
+#+end_src
+** my-note-sys 笔记体系
+*** =module list=
+#+begin_src elisp :tangle .local/.doom.d/init.el
+:my-note-sys
+my-capture      ; capture noting base on org-captuer
+#+end_src
+Resouce
+- [[~/org-files/README.org][org-files]]
+*** my-capture
+**** packages, variables, and filehead setup
+packages list
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-note-sys/my-capture/packages.el
+;;; my-note-sys/my-capture/packages.el -*- no-byte-compile: t; -*-
+
+#+end_src
+variables
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+;;; my-note-sys/my-capture/config.el -*- lexical-binding: t; -*-
+(with-eval-after-load 'org
+  (setq org-capture-templates nil))  ; clean template after public org module
+
+(setq org-directory "~/org-files/")  ; note db
+#+end_src
+autoload
+#+begin_src elisp :mkdirp yes :tangle .local/.doom.d/modules/my-note-sys/my-capture/autoload.el
+;;; my-note-sys/my-capture/autoload.el -*- lexical-binding: t; -*-
+#+end_src
+**** my-agenda
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+(setq org-agenda-files
+      (directory-files-recursively "~/org-files/roam/daily" "\\.org$"))
+
+;; (dolist (d org-directory)
+;; (setq org-agenda-files
+;;        (append org-agenda-files
+;;               (seq-filter (lambda(x) (not (string-match "/.emacs.d/" (file-name-directory x))))
+;;       (directory-files-recursively (expand-file-name "~/dotfiles/config") "\\.org$")))))
+#+end_src
+**** universal file and entry location function
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/autoload.el
+;;;###autoload
+(defun my-capture-year-path-file-full (directory filename)
+  (expand-file-name (concat directory
+                            (format-time-string "%Y/") filename)))
+
+;;;###autoload
+(defun my-capture-entry-tree-two-level
+    (heading subheading &optional todo-key begin-point property)
+  "find or create entry tree with subtree as todo iterm optional"
+  (let (;; local value list
+	;; the ^ anchor specifies that the following pattern
+	;; must begin at the first character position of the string
+	(leve1-regex (concat "^\\* " heading "$"))
+	;; bypass some todo-key
+	(leve2-regex (concat "^\\*\\* [a-zA-Z]* *\\[*#*[A-D]*\\]* *" subheading "$"))
+	);; end
+    ;; move point to the beginning of the buffer
+    (goto-char (point-min))
+    (cond
+     ;; find or create tree
+     ((not (re-search-forward leve1-regex nil t))
+      ;; (message "careat whole tree")
+      ;; add tree at end of buffer
+      (goto-char (point-max))
+      (insert "\n* " heading
+	      "\n** "
+	      (if todo-key (concat todo-key " " subheading) subheading)
+	      (if property (concat "\n" property) "")))
+     ((not (re-search-forward leve2-regex nil t))
+      ;; (message "careat leve 2")
+      ;; reach line of heading
+      (end-of-line)
+      ;; insert subheading
+      (insert "\n** "
+	      (if todo-key (concat todo-key " " subheading) subheading)
+	      (if property (concat "\n" property) "")))
+     (t (end-of-line)))
+    ;; reach end of line of subheading
+    (if begin-point (unless (re-search-forward begin-point nil t)
+		      ;; create begin-point right after subheading
+		      (insert "\n   " begin-point)))
+    ;;(unless (equal (forward-line) 0) (insert "\n"))
+    ;;(beginning-of-line)
+    ))
+
+#+end_src
+**** task-sys
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+(defun ingtshan/draw-delete-line ()
+  "draw delete line by add + to begin of first word and end of line
+if deleted then move + away"
+(interactive)
+(progn
+  (org-end-of-line)
+
+  (cond
+   ((char-equal (preceding-char) ?+)
+      (org-beginning-of-line)
+      (forward-word)
+      (backward-word)
+      (when (char-equal (preceding-char) ?+)
+        (delete-backward-char 1)
+          (org-end-of-line)
+          (delete-backward-char 1)))
+   (t
+    (insert "+")
+    (org-beginning-of-line)
+    (forward-word)
+    (backward-word)
+    (insert "+")
+    (org-end-of-line)))))
+
+(defun ingtshan/find-time-zoom ()
+  (let ((i 100)
+        (iszoom nil)
+        (strflag "^&Time")
+        (avg '())
+        );; end of local value
+    (while (and (>= i 0) (not iszoom))
+      (when (string-match
+                 strflag
+                 (buffer-substring-no-properties
+                  (line-beginning-position)
+                  (line-end-position)))
+        (setq iszoom (not iszoom))
+         );; end when
+        (next-line));; end while
+    (while (and (>= i 0) iszoom)
+      (add-to-list 'avg
+                   (buffer-substring-no-properties
+                    (+ (line-beginning-position) 2)
+                    (line-end-position)))
+      (next-line)
+      (when (string-match
+                 strflag
+                 (buffer-substring-no-properties
+                  (line-beginning-position)
+                  (line-end-position)))
+        (setq iszoom (not iszoom))
+        );; end when
+      );; end while
+    (nreverse avg));; end of let
+  );; end of fun
+
+(defun ingtshan/move-task ()
+  (interactive)
+  (let*
+      ((line (line-number-at-pos))
+       (task (buffer-substring-no-properties
+             (line-beginning-position)
+             (line-end-position)))
+       (arglist (ingtshan/find-time-zoom))
+      (time (completing-read "Move to? " arglist))
+      (i 100)
+      (f nil))
+      (goto-line line)
+      ;; find target line
+      (while (and (> i 0) (not f))
+        (next-line)
+        (setq f (string-match
+                 (format "^- %s$" time)
+                 (buffer-substring-no-properties
+                  (line-beginning-position)
+                  (line-end-position)))))
+      (when f
+        (org-end-of-line)
+        (insert "\n  - ")
+        (insert task)
+        (goto-line line)
+        (evil-org-delete (line-beginning-position) (line-end-position))
+        )
+      (unless f (goto-line line))
+      ))
+
+(with-eval-after-load 'org
+  (bind-key "s-d" #'ingtshan/draw-delete-line org-mode-map)
+  (bind-key "s-m" #'ingtshan/move-task org-mode-map))
+
+(global-set-key (kbd "s-p") '(lambda() (interactive) (org-roam-dailies--capture (current-time) t)))
+#+end_src
+**** keep-log
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+(with-eval-after-load 'org
+  (add-to-list 'org-capture-templates
+               '("l" "log of life")))
+#+end_src
+**** hacking-log
+config
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+(with-eval-after-load 'org
+  (add-to-list 'org-capture-templates
+               `("lh" "log of hacking" plain
+                 (file+function
+                  (lambda () (my-capture-year-path-file-full "~/org-files/roam/daily/agenda/" "logbook.org"))
+                  (lambda ()
+                    (my-capture-entry-tree-two-level
+                     "Hacking Log"
+                     (format-time-string "HL %Y-%m %B"))
+                    (org-end-of-subtree)
+                    (insert "\n")))
+                 "%U %? %i%a")))
+#+end_src
+**** studying-log
+#+begin_src elisp :tangle .local/.doom.d/modules/my-note-sys/my-capture/config.el
+(with-eval-after-load 'org
+  (add-to-list 'org-capture-templates
+               `("ls" "log of studying" plain
+                 (file+function
+                  (lambda () (my-capture-year-path-file-full "~/org-files/roam/daily/agenda/" "logbook.org"))
+                  (lambda ()
+                    (my-capture-entry-tree-two-level
+                     "Studying Log"
+                     (format-time-string "SL %Y-%m %B"))
+                    (org-end-of-subtree)
+                    (insert "\n")))
+                 "%U %? %i%a")))
+#+end_src
+* Config End
+#+begin_src elisp :tangle .local/.doom.d/init.el
+)       ; end of doom module list
+#+end_src
+*

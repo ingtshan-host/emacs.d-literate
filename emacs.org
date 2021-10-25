@@ -1,0 +1,1574 @@
+# -*- lexical-binding: t; -*-
+#+STARTUP: overview
+#+Title: ingtshan Emacs Config main
+* How to use
+  my version of =emacs= of mac
+  #+begin_src sh
+    brew tap railwaycat/emacsmacport
+    brew install emacs-mac --with-modules --with-rsvg --with-imagemagick --with-natural-title-bar
+    ## link to app
+    ln -s /usr/local/Cellar/emacs-mac/*/Emacs.app/ /Applications/
+  #+end_src
+  
+  - When chaneg this file, just save to trigger auto tangle function
+  - immediatly tangle ~C-c C-v t~
+  - execute single ~C-x C-e~
+  - reload single file ~M-x load-file~
+  - Put the configuration that can be dumped in init-before.el block, and others on init-after.el.
+  - To apply the configuration change for dumping, redump emacs
+
+  - git clone dotfile as =~/dotfiles=
+  - make links
+    - link =.emacs=
+    #+begin_src shell
+      ### when pokeball device
+      ln -s $(dirname ~/dotfiles/config/.local/.pokeball_emacs)/.pokeball_emacs $(dirname ~/dotfiles)/.emacs
+      ### when superme device
+      ln -s $(dirname ~/dotfiles/config/.local/.superme_emacs)/.superme_emacs $(dirname ~/dotfiles)/.emacs
+    #+end_src
+    - link =.emacs.d=
+    #+begin_src shell
+      ln -s $(dirname ~/dotfiles/config/.local/.emacs.d)/.emacs.d $(dirname ~/dotfiles)/.emacs.d
+    #+end_src
+    
+  - if you want to use dump
+    - after links all file and init emacs
+    - general dump file with function
+      #+begin_src emacs-lisp
+	(ingtshan/luna-dump)
+      #+end_src
+    - then link to Emasc.app (Noted should link dired to relase path)
+      #+begin_src shell
+	cd /Applications/Emacs.app/Contents/MacOS # you should fixed brew link before
+	mv Emacs.pdmp Emacs.pdmp.bak_$(date '+%Y_%m_%d')
+	ln -s $(dirname ~/dotfiles/config/.local/.emacs.d/emacs.pdmp)/emacs.pdmp $(pwd)/Emacs.pdmp
+      #+end_src
+      
+  - When chaneg this config file, just save to trigger auto tangle function
+  - immediatly tangle ~C-c C-v t~
+  - execute single ~C-x C-e~
+  - reload single file ~M-x load-file~
+  - Put the configuration that can be dumped in init-before.el block, and others on init-after.el.
+  - To apply the configuration change for dumping, redump emacs
+* Manual operation
+** manually create myelpa - elpa-mirror
+   - install when need
+   #+begin_src emacs-lisp
+     (setup (:package elpa-mirror))
+   #+end_src
+   ~M-x elpamr-create-mirror-for-installed~ to create local repository (=~/dotfiles/profile/myelpa=).
+** manually get package from github - quelpa
+   #+begin_src emacs-lisp
+     (setup (:package quelpa))
+   #+end_src
+** manually chinese-fonts-setup
+   - setup with cnfonts
+   #+begin_src emacs-lisp
+     (setup (:package cnfonts) (cnfonts-enable))
+   #+end_src
+   - font library =~/dotfiles/profile/fonts=
+   - install font manualy
+** dumper process dump.el
+   dump.el more info in [[https://archive.casouri.cat/note/2020/painless-transition-to-portable-dumper/index.html][Painless Transition to Portable Dumper]]
+   use =M-x ingtshan/luna-dump= to dumper init-dump.el
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/dumper-process.el
+     (load "~/.emacs.d/init-dump.el")
+     
+     ;;(setq dump-exclude-packages '(ivy))
+     (setq dump-exclude-packages nil)
+     
+     (dolist (package package-activated-list)
+       (unless (member package dump-exclude-packages)
+	 (require package)))
+     
+     (setq dumped-load-path load-path)
+     
+     (dump-emacs-portable "var/emacs.pdmp")
+     #+end_src
+   if you want always dump start in mac app, back Emacs.pdmp in [[/Applications/Emacs.app/Contents/MacOS]]
+   #+begin_src shell
+     cd /Applications/Emacs.app/Contents/MacOS
+     ln -s $(dirname ~/.local/.emacs.d)/.emacs.d/emacs.pdmp $(pwd)/Emacs.pdmp
+   #+end_src
+* Before setup
+  init file structure
+  .emacs
+  .emacs.d
+  \|-- init-dump.el
+  \`-- init.el
+** device boot emacs
+   Boot frame position
+   =superme=
+   #+begin_src emacs-lisp :tangle .superme_emacs
+     (set-frame-position (selected-frame) 1440 -540)
+   #+end_src
+   =pokeball=
+   #+begin_src emacs-lisp :tangle .pokeball_emacs
+     (set-frame-position (selected-frame) 0 0)
+   #+end_src
+** generate .emacs
+   =superme=
+   #+begin_src emacs-lisp :tangle .local/.superme_emacs
+     (defvar my/device-name "superme"
+       "global share value of my muti device info, current device")
+     
+     (defvar dumped-load-path nil
+       "Not nil when using dump.")
+     
+     (when dumped-load-path
+       (setq load-path dumped-load-path)
+       (setq warning-minimum-level :emergency)
+       (global-font-lock-mode t)
+       (transient-mark-mode t))
+     (unless dumped-load-path
+       (load "~/.emacs.d/init-dump.el"))
+     
+     (load "~/.emacs.d/init.el")
+     (load "~/.emacs.d/multi-device/superme.el")
+   #+end_src
+   =pokeball=
+   #+begin_src emacs-lisp :tangle .local/.pokeball_emacs
+     (defvar my/device-name "pokeball"
+       "global share value of my muti device info, current device")
+     (defvar dumped-load-path nil
+       "Not nil when using dump.")
+     
+     (when dumped-load-path
+       (setq load-path dumped-load-path)
+       (setq warning-minimum-level :emergency)
+       (global-font-lock-mode t)
+       (transient-mark-mode t))
+     (unless dumped-load-path
+       (load "~/.emacs.d/init-dump.el"))
+     
+     (load "~/.emacs.d/init.el")
+     (load "~/.emacs.d/multi-device/pokeball.el")
+   #+end_src
+   =default= (no .emacs info)
+** file head and log style
+   - new file and file local variable setq
+     - enable lexical-binding 静态绑定
+     - my console log macro
+   #+begin_src emacs-lisp :mkdirp yes :tangle .local/.emacs.d/init-dump.el
+     ;; -*- lexical-binding: t; -*-
+     (defmacro console-log (info)
+       ;;`(message "[%s] %s" (format-time-string "%F %H:%M %S'") ,info)
+       `(message "[setup] %s" ,info)
+       )
+   #+end_src
+   #+begin_src emacs-lisp :mkdirp yes :tangle .local/.emacs.d/init.el
+     ;; -*- lexical-binding: t; -*-
+   #+end_src
+** proxy setup
+  #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+    (setq url-proxy-services
+	  '(("http" . "127.0.0.1:8889")
+	    ("https" . "127.0.0.1:8889")))
+  #+end_src
+* Package System Setup
+** package-archives
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (package-initialize)
+     (require 'package)
+
+     (defun ingtshan/online-elpa ()
+       (interactive)
+       (setq package-archives
+	     '(("melpa" . "https://melpa.org/packages/")
+	       ("melpa-stable" . "https://stable.melpa.org/packages/")
+	       ("org" . "https://orgmode.org/elpa/")
+	       ("gnu" . "https://elpa.gnu.org/packages/")
+	       ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+       (message "%s" package-archives))
+
+     ;; default as myelpa, generate by elpa-mirror
+     (setq package-archives
+	   '(("myelpa" . "~/dotfiles/profile/myelpa")))
+   #+end_src
+** main package management =setup=
+   - install =setup= macro to manage package
+   - more info click [[https://git.sr.ht/~pkal/setup/tree/master/item/README.md][pkal/setup: README.md]]
+   - more useage click [[https://ruzkuku.com/files/init.el.html][pkal's init]]
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     ;; setup package install when need
+     (unless package-archive-contents
+       (package-refresh-contents))
+     (unless (package-installed-p 'setup)
+       (package-refresh-contents)
+       (package-install 'setup))
+     
+     (require 'setup)
+     ;; shorthand for `customize-set-variable'
+     (defmacro setc (&rest args)
+       "Customize user options using ARGS like `setq'."
+       (declare (debug setq))
+       `(setup (:option ,@args)))
+   #+end_src
+* Dumper
+** Dump within emacs
+   - dump Emacs from within Emacs
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (defun util/dump ()
+       "Dump Emacs."
+       (interactive)
+       (let ((buf "*dump process*"))
+	 (make-process
+	  :name "dump"
+	  :buffer buf
+	  :command
+	  (list "emacs" "--batch" "-q" "-l"
+		(expand-file-name "etc/lisp/do-dump.el" user-emacs-directory )))
+	 (display-buffer buf)))
+   #+end_src
+   if you want always dump start in mac app, back Emacs.pdmp in [[/Applications/Emacs.app/Contents/MacOS]]
+   #+begin_src shell
+     cd /Applications/Emacs.app/Contents/MacOS
+     ln -s $(dirname ~/.local/.emacs.d)/.emacs.d/emacs.pdmp $(pwd)/Emacs.pdmp
+   #+end_src
+* Basic Setup
+** mac-key setup
+   Setup because using emacs-mac
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (when (eq system-type 'darwin)
+       (setq mac-command-modifier 'hyper mac-option-modifier 'meta)
+
+       (global-set-key [(hyper a)] #'mark-whole-buffer)
+       (global-set-key [(hyper v)] #'yank)
+       (global-set-key [(hyper c)] #'kill-ring-save)
+       (global-set-key [(hyper s)] #'save-buffer)
+       (global-set-key [(hyper l)] #'goto-line)
+       (global-set-key [(hyper z)] #'undo)
+       (global-set-key [(hyper n)] #'make-frame-command)
+       ;; quit emacs
+       (global-set-key
+	[(hyper q)]
+	#'(lambda (&optional pfx)
+	    (interactive "P") (when (or pfx (y-or-n-p "Quit emacs now?"))
+				(save-buffers-kill-terminal))))
+       ;; try close window if failed try close frame if failed exit emacs
+       (global-set-key
+	[(hyper w)]
+	#'(lambda (&optional pfx)
+	    (interactive "P") (let ((q nil)) (condition-case ex
+						 (delete-window) ('error (setq q t)))
+				   (if q (progn
+					   (setq q nil)
+					   (condition-case ex
+					       (delete-frame) ('error (setq q t)))
+					   (if q (progn
+						   (when (or pfx (y-or-n-p "Quit emacs now?"))
+						     (save-buffers-kill-terminal)))))))))
+       (console-log 'mac-key\ setup!)); end of when
+   #+end_src
+** my key setup
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (global-set-key [C-tab] #'indent-region)
+     ;; use shift to extend select
+     (global-set-key (kbd "<S-down-mouse-1>") #'mouse-save-then-kill)
+
+     (console-log 'my\ key\ setup!)
+   #+end_src
+* Theme Setup
+** all-the-icons
+   Make sure have all the icons and fonts
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package all-the-icons))
+     (console-log 'all-the-icons\ inited!)
+   #+end_src
+   #+begin_src emacs-lisp
+     (unless (package-installed-p 'all-the-icons)
+       (setup (:package all-the-icons))
+       ;;(counsel-M-x-action "all-the-icons-install-fonts")
+       ;;Download and install the latests fonts based on OS from local path
+       (let ((dired "~/dotfiles/profile/emacs-plugin/all-the-icons/5.0.0/fonts"))
+	 (let* ((dired (expand-file-name dired)))
+	   (cond ((not (file-directory-p dired))
+		  (message "Directory Not Found %s" dired))
+		 (t
+		  (let* ((path-format (concat dired  "/%s"))
+			 (font-dest (cond
+				     ;; Default Linux install directories
+				     ((member system-type '(gnu gnu/linux gnu/kfreebsd))
+				      (concat (or (getenv "XDG_DATA_HOME")
+						  (concat (getenv "HOME") "/.local/share"))
+					      "/fonts/"))
+				     ;; Default MacOS install directory
+				     ((eq system-type 'darwin)
+				      (concat (getenv "HOME") "/Library/Fonts/"))))
+			 (known-dest? (stringp font-dest))
+			 (font-dest (or font-dest
+					(read-directory-name
+					 "Font installation directory: " "~/"))))
+     
+		    (unless (file-directory-p font-dest) (mkdir font-dest t))
+		    (mapc (lambda (font)
+			    (copy-file
+			     (format path-format font)
+			     (expand-file-name font font-dest)
+			     t))
+			  all-the-icons-font-names)
+		    (when known-dest?
+		      (message "Fonts downloaded, updating font cache... <fc-cache -f -v> ")
+		      (shell-command-to-string
+		       (format "fc-cache -f -v")))
+		    (message "%s Successfully %s `all-the-icons' fonts to `%s'!"
+			     (all-the-icons-wicon "stars" :v-adjust 0.0)
+			     (if known-dest? "installed" "downloaded")
+			     font-dest)))))))
+   #+end_src
+** doom-mode-line
+   Initialize doom-modeline
+   *Note:* Will need M-x all-the-icons-install-fonts at first startup
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package doom-modeline)
+       (:option doom-modeline-mode 1
+		doom-modeline-icon t
+		doom-modeline-major-mode-icon t
+		doom-modeline-minor-modes nil
+		doom-modeline-lsp nil))
+     (console-log 'doom-modeline\ inited!)
+   #+end_src
+** doom-themes
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package doom-themes)
+       (:require all-the-icons)
+       (:only-if (display-graphic-p))        ; enable in graphic
+       (:option doom-themes-enable-bold t    ; if nil, bold is universally disabled
+		doom-themes-enable-italic t  ; if nil, italics is universally disabled
+		doom-themes-treemacs-theme "doom-colors") ; use the colorful treemacs theme
+       (doom-themes-visual-bell-config)      ; enable flashing mode-line on errors
+       (doom-themes-neotree-config)          ; enable custom neotree theme, need all-the-icons
+       (doom-themes-treemacs-config)
+       (doom-themes-org-config) ; Corrects (and improves) org-mode's native fontification.
+       (console-log 'doom-themes\ enable!))
+   #+end_src
+** info-coqlors
+   Show info message with colors
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package info-colors))
+     
+     (add-hook 'Info-selection-hook #'info-colors-fontify-node)
+     
+     (console-log 'info-colors\ inited!)
+   #+end_src
+** nyan-mode and rainbow-delimiters
+   Cat will tall me when I can take a break!
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package nyan-mode)
+       (:option  nyan-wavy-trail t
+		 nyan-animate-nyancat t))
+     
+     (setup (:package rainbow-delimiters))
+     (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+     (console-log "rainbow now!")
+   #+end_src
+* UI Setup
+  #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+    (setc bookmark-default-file
+	  (expand-file-name
+	   "~/dotfiles/profile/emacs-plugin/bookmark/bookmarks")
+	  inhibit-splash-screen 1   ; don't show help buffer at startup
+	  make-backup-files nil     ; no backup files
+	  auto-save-default nil     ; no auto save
+	  create-lockfiles nil)     ; disable lockfile
+    
+    (tool-bar-mode -1)          ; disable tool bar
+    (scroll-bar-mode -1)        ; disable scroll bar
+    (global-hl-line-mode t)     ; hight-line-mode
+    (global-visual-line-mode t) ; visual-line-mode
+    (delete-selection-mode 1)   ; make select more like other editro
+    (global-auto-revert-mode 1) ; auto reload file modify outside
+    (show-paren-mode)
+    (fset 'yes-or-no-p 'y-or-n-p)
+    
+    (load-theme 'doom-one t)    ; doom theme
+    (nyan-mode t) (console-log "nyan-mode inited! cat is with you now!")
+    
+    (console-log 'UI\ setup!)
+  #+end_src
+  Fix minibuffer problem
+  #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+    (defun stop-using-minibuffer ()
+      "kill the minibuffer"
+      (when (and (>= (recursion-depth) 1)
+		 (active-minibuffer-window))
+	(abort-recursive-edit)))
+    
+    (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
+    (console-log 'fix\ minibuffer!)
+  #+end_src
+* Minor Modes Setup
+  Setups for minor modes (global open, add some new features).
+  All setups in this section should be able to load in dumping.
+  But still some modes can not be dump (like company mode).
+** ivy and treemacs
+   Enhanced M-x and C-x C-f with ivy
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package ivy)
+       (:option ivy-count-format "(%d/%d) "
+		ivy-use-virtual-buffers t
+		ivy-mode 1
+		;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’
+		ivy-use-virtual-buffers t
+		;; number of result lines to display
+		ivy-height 10
+		;; does not count candidates
+		ivy-count-format ""
+		;; no regexp by default
+		ivy-initial-inputs-alist nil
+		;; configure regexp engine. ;; allow input not in order
+		ivy-re-builders-alist '((t   . ivy--regex-ignore-order))))
+     
+     (add-hook 'Buffer-menu-mode-hook #'(lambda ()
+					  (switch-to-buffer-other-window "*Buffer List*")))
+     
+     ;; (define-key ivy-mode-map (kbd "C-'") #'ivy-avy)
+     
+     ;; should put after ivy loaded
+     (setup (:package counsel)
+       (:option counsel-mode t))
+     
+     (setup (:package swiper))
+     
+     (global-set-key (kbd "C-s") #'swiper)
+     (global-set-key (kbd "C-r") #'swiper)
+     
+     ;; should put after counsel loaded
+     (setup (:package ivy-rich)
+       (:option ivy-rich-path-style 'abbrev
+		ivy-virtual-abbreviate 'full
+		ivy-rich-mode t))
+     
+     (setup (:package treemacs))
+     
+     (add-hook 'treemacs-mode-hook #'(lambda ()
+				       (treemacs-resize-icons 15)))
+     
+     (console-log "ivy, counsel, swiper, ivy-rich and treemacs inited!")
+   #+end_src
+** avy jump
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package avy))
+     (global-set-key (kbd "H-g SPC") #'avy-goto-char) ; go char
+     (global-set-key (kbd "H-g w") #'avy-goto-word-1) ; go word
+     (global-set-key (kbd "H-g l") #'avy-goto-line) ; go line
+   #+end_src
+** spell checking --disable
+   #+begin_src emacs-lisp
+     (use-package ispell :ensure t
+		  :init (setq ispell-program-name "aspell"
+			      ispell-list-command "list"
+			      ispell-dictionary "british"
+			      flyspell-auto-correct-binding (kbd "<S-f12>")))
+     
+     (use-package flycheck)
+   #+end_src
+** highlight-indent-guides --disable
+   highlight indent
+   - turn on in progn-mode
+   - use bitmap method
+   #+begin_src emacs-lisp
+     (setup (:package highlight-indent-guides)
+       (:option highlight-indent-guides-method 'bitmap))
+     
+     (add-hook 'prog-mode-hook #'highlight-indent-guides-mode)
+     
+     (message "highlight-indent-guides inited!")
+   #+end_src
+** company
+   Initialize company.
+   - delay 0s
+   - turn on selection wrap (circle seclecte)
+   - minimun prefix length = 3
+   - turn global
+   - remap C-n C-e and RET
+   - company-box: use some icons
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package company))
+     
+     (with-eval-after-load 'company
+       (define-key company-active-map (kbd "RET") #'company-complete-selection)
+       (define-key company-active-map (kbd "C-n") #'company-select-next)
+       (define-key company-active-map (kbd "C-e") #'company-select-previous))
+     
+     (setup (:package company-box))
+     (add-hook 'company-mode-hook #'company-box-mode)
+   #+end_src
+   *Note:* This can not dump, will have some load path issus, I don't know how to fix it:(
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (setup company
+       (:option company-idle-delay 0
+		company-selection-wrap-around t
+		company-minimum-prefix-length 3)
+       (company-tng-configure-default)
+       (global-company-mode))
+     
+     (console-log "company inited!")
+   #+end_src
+
+** exec-path-from-shell
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package exec-path-from-shell))
+     (console-log "Ready to refresh shell path!")
+   #+end_src
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (exec-path-from-shell-initialize)
+     (console-log "Emacs Shell PATH refresh!")
+   #+end_src
+** emacs-log
+   Install interaction-log Manually for myelpa
+   #+begin_src emacs-lisp
+     (unless (package-installed-p 'interaction-log)
+       (quelpa '(interaction-log
+		 :fetcher git
+		 :url "https://github.com/ingtshan/interaction-log.git")))
+   #+end_src
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package interaction-log))
+     (add-hook 'ilog-log-buffer-mode-hook #'(lambda ()
+					      (visual-line-mode 1)))
+   #+end_src
+   Tool code
+   - set window's width
+   - open buffer in right (without switch to)
+   - kill buffer and windows (if have)
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (defun ingtshan/window-set-width (width)
+       "Set the width of current buffer to WIDTH."
+       (let ((window-size-fixed)
+	     (w (max width window-min-width)))
+	 (cond
+	  ((> (window-width) w)
+	   (shrink-window-horizontally  (- (window-width) w)))
+	  ((< (window-width) w)
+	   (enlarge-window-horizontally (- w (window-width)))))))
+     
+     (defun ingtshan/open-buffer-right (buffer)
+       (when (get-buffer buffer)
+	 (let ((temp-height  split-height-threshold)
+	       (temp-width split-width-threshold))
+	   (setq split-height-threshold nil)
+	   (setq split-width-threshold 0)
+	   (switch-to-buffer-other-window buffer)
+	   (ingtshan/window-set-width 30)
+	   (setq split-height-threshold temp-height)
+	   (setq split-width-threshold temp-width)
+	   ;;(counsel-M-x-action "other-window")
+	   ;;(run-at-time delay nil
+	   ;;	     #'(lambda() (counsel-M-x-action "other-window")))
+	   )))
+     
+     (defun ingtshan/kill-buffer-and-window (buffer)
+       "Kill the selected buffer and try to delete the selected window."
+       (interactive)
+       (let ((window-to-delete (selected-window))
+	     (buffer-to-kill (get-buffer buffer))
+	     (delete-window-hook (lambda () (ignore-errors (delete-window)))))
+	 (setq enable-recursive-minibuffers nil)
+	 (unwind-protect
+	     (progn
+	       (add-hook 'kill-buffer-hook delete-window-hook t t)
+	       (if (kill-buffer (get-buffer buffer))
+		   ;; If `delete-window' failed before, we rerun it to regenerate
+		   ;; the error so it can be seen in the echo area.
+		   (when (eq (selected-window) window-to-delete)
+		     (delete-window))))
+	   ;; If the buffer is not dead for some reason (probably because
+	   ;; of a `quit' signal), remove the hook again.
+	   (ignore-errors
+	     (with-current-buffer buffer-to-kill
+	       (remove-hook 'kill-buffer-hook delete-window-hook t))))))
+   #+end_src
+   Create emacs-log command with counsel and interaction-log
+   - open new window for log
+   - open new frame for log
+   - kill buffer and window
+     #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+       (setup (:package interaction-log))
+       (add-hook 'ilog-log-buffer-mode-hook #'(lambda ()
+						(visual-line-mode 1)))
+       
+       (defun ingtshan/emacs-log-start-move-buffer ()
+	 (ingtshan/open-buffer-right "*Emacs Log*")
+	 (remove-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-start-move-buffer t))
+       
+       (defun ingtshan/emacs-log-start ()
+	 (interactive)
+	 (let ((buffer "*Emacs Log*")
+	       (current (current-buffer)))
+	   (cond ((not (get-buffer buffer))
+		  (add-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-start-move-buffer)
+		  (counsel-M-x-action "interaction-log-mode"))
+		 (t (ingtshan/open-buffer-right buffer)))
+	   ;;	      (with-current-buffer-window current)
+	   ;;	      (run-at-time "0.01 sec"
+	   ;;			   #'(lambda() (switch-to-buffer-other-window current)))
+	   ))
+       
+       (defun ingtshan/emacs-log-stop ()
+	 (interactive)
+	 (let ((buffer "*Emacs Log*"))
+	   (when (get-buffer buffer)
+	     (counsel-M-x-action "interaction-log-mode")
+	     (ingtshan/kill-buffer-and-window buffer)
+	     (message "Interaction log disabled and kill %s buffer" buffer))))
+       
+       (defun ingtshan/emacs-log-move-right-buffer-change ()
+	 (remove-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-move-right-buffer-change t)
+	 (switch-to-buffer-other-frame "*Emacs Log*")
+	 (ingtshan/move-right))
+       
+       (defun ingtshan/emacs-log-move-right()
+	 "Open Log in new frame then move right"
+	 (interactive)
+	 (let ((buffer "*Emacs Log*"))
+	   (cond ((not (get-buffer "*Emacs Log*"))
+		  (add-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-move-right-buffer-change)
+		  (counsel-M-x-action "interaction-log-mode"))
+		 (t
+		  (switch-to-buffer-other-frame buffer)
+		  (ingtshan/move-right)))))
+     #+end_src
+     end of emacs-log
+     #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+       (console-log 'emacs-log\ inited!)
+     #+end_src
+** yasnippet
+   install manunaly
+   #+begin_src emacs-lisp
+     (unless (package-installed-p 'yasnippet)
+       (quelpa '(yasnippet
+		 :fetcher git
+		 :url "https://github.com/ingtshan/yasnippet.git")))
+   #+end_src
+   Initialize [[https://github.com/Zetagon/yasnippet][yasnippet]]
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package yasnippet)
+       (:option yas-snippet-dirs '("~/dotfiles/profile/emacs-plugin/yasnippet")))
+     
+     (add-hook 'org-mode-hook #'yas-minor-mode)
+   #+end_src
+   Because company is not dump
+   
+   Add yasnippet support for all company backends https://github.com/syl20bnr/spacemacs/pull/179
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (with-eval-after-load 'company
+       (add-to-list 'load-path "~/dotfiles/profile/emacs-plugin/yasnippet")
+       (yas-minor-mode)
+       (yas-reload-all)
+     
+       (defvar company-mode/enable-yas t
+	 "Enable yasnippet for all backends.")
+     
+       (defun company-mode/backend-with-yas (backend)
+	 (if (or (not company-mode/enable-yas)
+		 (and
+		  (listp backend)
+		  (member 'company-yasnippet backend)))
+	     backend
+	   (append
+	    (if (consp backend) backend (list backend))
+	    '(:with company-yasnippet))))
+     
+       (setq company-backends
+	     (mapcar
+	      #'company-mode/backend-with-yas
+	      company-backends)))
+     
+     (console-log 'yasnippet\ inited!)
+   #+end_src
+
+** gpg --disable
+   #+begin_src emacs-lisp
+     (use-package epa-file
+		  :ensure nil
+		  :config
+		  (epa-file-enable)
+		  (setq epa-pinentry-mode 'loopback))
+   #+end_src
+** org-pomodoro
+   - setup alert style as osx-notifier
+     - use =osascrip=
+     - =notifier= should install terminal-notifier first using =brew install terminal-notifier=
+   - setup org-pomodoro
+   - key bind at [[*Org][Org]]
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package alert)
+       (:only-if (eq system-type 'darwin))
+       (:option
+	;;alert-default-style 'notifier
+	alert-default-style 'osx-notifier))
+     
+     (setup (:package org-pomodoro)
+       (:option
+	;; clock setup
+	org-pomodoro-length 50
+	org-pomodoro-short-break-length 15
+	org-pomodoro-long-break-length 25
+	;; notifier setup
+	org-pomodoro-play-sounds t
+	org-pomodoro-start-sound-p t
+	org-pomodoro-start-sound (expand-file-name "~/dotfiles/profile/sounds/customer-sounds/pop.mp3")
+     
+	org-pomodoro-finished-sound-p t
+	org-pomodoro-finished-sound (expand-file-name "~/dotfiles/profile/sounds/customer-sounds/success1.wav")
+     
+	org-pomodoro-killed-sound-p t
+	org-pomodoro-killed-sound (expand-file-name "~/dotfiles/profile/sounds/customer-sounds/wrong.mp3")
+     
+	org-pomodoro-short-break-sound-p t
+	org-pomodoro-short-break-sound (expand-file-name "~/dotfiles/profile/sounds/customer-sounds/correct.wav")
+     
+	org-pomodoro-long-break-sound-p t
+	org-pomodoro-long-break-sound (expand-file-name "~/dotfiles/profile/sounds/customer-sounds/correct.wav")
+     
+	org-pomodoro-ticking-sound-p nil
+	;;org-pomodoro-ticking-sound (expand-file-name "~/dotfiles/profile/macox-sounds/Sosumi.aiff")
+	))
+     
+     (with-eval-after-load 'org-pomodoro
+       (add-hook 'org-pomodoro-started-hook
+		 #'(lambda () (org-pomodoro-notify "Pomodoro start" "Focus!")))
+       (add-hook 'org-pomodoro-killed-hook
+		 #'(lambda () (org-pomodoro-maybe-play-sound :killed))))
+     
+     ;; test
+     ;; (org-pomodoro-notify "title" "message")
+     ;; (org-pomodoro-maybe-play-sound :killed)
+   #+end_src
+   - use titlebar to show pomodoro and clock info
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+     (with-eval-after-load 'org
+       (setq frame-title-format
+	     '((:eval (concat
+		       (if (and
+			    (boundp 'org-pomodoro-mode-line)
+			    org-pomodoro-mode-line)
+			   (if (listp org-pomodoro-mode-line)
+			       (apply #'concat org-pomodoro-mode-line)
+			     org-pomodoro-mode-line) "")
+		       (if (and
+			    (boundp 'org-mode-line-string)
+			    org-mode-line-string)
+			   org-mode-line-string "")
+		       (if (buffer-file-name)
+			   (abbreviate-file-name
+			    (buffer-file-name)) "%b")))))
+       (console-log 'org-pomodoro\ inited!))
+     ;; test function
+   #+end_src
+** ivy-omni-org
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package ivy-omni-org))
+     (global-set-key (kbd "H-g b") #'ivy-omni-org)
+     
+     (add-hook 'emacs-startup-hook
+	       #'(lambda ()
+		   (setup ivy-omni-org
+		     (:option ivy-omni-org-file-sources
+			      '(org-starter-known-files
+				org-agenda-files)
+     
+			      ivy-omni-org-content-types
+			      '(agenda-commands
+				org-ql-views
+				buffers
+				files
+				bookmarks)))
+		   (console-log 'ivy-omni-org\ inited!)))
+     
+   #+end_src
+   but config at [[*org-agenda][org-agenda]]
+* Major Modes Setup
+  Customize major modes. Most things in this section can be dumped.
+** Org
+   Initialize org-mode
+   - ellipsis symbol
+   - hide emphasis markers
+   - evil integration
+   - bullets
+   - keybindings with general.el
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package org)
+       (:package org-contrib)
+       (:option org-ellipsis " ▼"
+		org-hide-emphasis-markers t))
+     
+     (global-set-key (kbd "C-c a") #'org-agenda)
+     (global-set-key (kbd "H-e g") #'org-clock-goto)
+     (global-set-key (kbd "H-e s") #'(lambda ()
+				       (interactive)
+				       (org-clock-in '(4))))
+     (with-eval-after-load 'org
+       (define-key org-mode-map (kbd "H-e p") #'org-pomodoro) ;; run pomodoro
+       (define-key org-mode-map (kbd "H-e i") #'org-clock-in) ;; run clock in/out
+       (define-key org-mode-map (kbd "H-e o") #'org-clock-out)
+       (define-key org-mode-map (kbd "H-g j") #'counsel-org-goto) ;; go jump
+       (define-key org-mode-map (kbd "H-g J") #'counsel-org-goto-all)) ;; go jump all
+     
+     (with-eval-after-load 'org-agenda
+       (define-key org-agenda-mode-map (kbd "H-e p") #'org-pomodoro) ;; run pomodoro
+       (define-key org-agenda-mode-map (kbd "H-e i") #'org-agenda-clock-in) ;; run clock in/out
+       (define-key org-agenda-mode-map (kbd "H-e o") #'org-agenda-clock-out))
+     
+   #+end_src 
+   - centre text for org mode
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package visual-fill-column))
+     
+     (defun ingtshan/org-mode-visual-fill ()
+       (setq visual-fill-column-width 200)
+       (visual-fill-column-mode 1))
+     
+     (with-eval-after-load 'org
+       (add-hook 'org-mode-hook #'ingtshan/org-mode-visual-fill))
+   #+end_src
+   - auto tangle when save this file
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (defun org-babel-auto-tangle ()
+       (when (;;use regex to math org file in root of dotfiles
+	      string-match-p
+	      (expand-file-name "~/dotfiles/config/.*org") 
+	      (buffer-file-name))
+	 (let ((org-confirm-babel-evaluate nil))
+	   (org-babel-tangle))))
+     
+     (with-eval-after-load 'org
+       (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org-babel-auto-tangle))))
+     
+     (console-log "org inited!")
+   #+end_src
+   Export as Markdown
+   1. origin style (no code block) using ~M-x org-md-export-...~
+   2. use ~pandoc~ to hanlde (app in shell or ~M-x org-pandoc-...~)
+   3. use ~ox-gfm~ export as Github style
+   #+begin_src emacs-lisp .local/.emacs.d/init-dump.el
+     (setup (:package ox-gfm))
+   #+end_src
+   Then use ~grip~ to view as github style
+   (you can install grip by howbrew using ~brew install grip~)
+
+   Or use ~pandoc~ to convert to pdf or other type.
+
+   [[https://fuco1.github.io/2017-05-25-Fontify-done-checkbox-items-in-org-mode.html][Fontify done checkbox items in org\-mode]]
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (font-lock-add-keywords
+      'org-mode
+      `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+	 1 'org-headline-done prepend))
+      'append)
+   #+end_src
+
+** Markdwon
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setup (:package markdown-mode))
+   #+end_src
+** Lua Mode --disable
+   #+begin_src emacs-lisp
+     (setup (:package lua-mode))
+   #+end_src
+* My Editor Setup
+** todo-key and logseq journal
+   Tool code
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (defun ingtshan/append-org-link-to-buffer (buffer from)
+       "Append to specified buffer the specified text.
+	  It is inserted into that buffer at end of buffer.
+	  When calling from a program, give two arguments:
+	  BUFFER (or buffer name), and the STRING to be copied."
+       (let* ((append-to (get-buffer-create buffer))
+	      (windows (get-buffer-window-list append-to t t))
+	      move-point-in-windows)
+	 (with-current-buffer append-to
+	   (barf-if-buffer-read-only)
+	   ;; record in which windows we should keep point at eob.
+	   (dolist (window windows)
+	     (when (= (window-point window) (point-max))
+	       (push window move-point-in-windows)))
+	   (let (return-to-position)
+	     ;; decide whether we should reset point to return-to-position
+	     ;; or leave it at eob.
+	     (unless (= (point) (point-max))
+	       (setq return-to-position (point))
+	       (goto-char (point-max)))
+	     (org-insert-all-links 1 (concat "- " from " ") "\n")
+	     (when return-to-position
+	       (goto-char return-to-position)))
+	   ;; advance to point-max in windows where it is needed
+	   (dolist (window move-point-in-windows)
+	     (set-window-point window (point-max))))))
+   #+end_src
+   Todo keyword
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (setq org-todo-keywords
+	   ;;(quote ((sequence "TODO(t)" "DOING(d!)" "BLOCK(b@/!)" "|" "DONE(D!)" "CANCELED(C@)")))
+	   (quote ((sequence "TODO(t)" "DOING(d)" "BLOCK(b@)" "|" "DONE(D)" "CANCELED(C@)"))))
+     
+     ;; 设置任务样式
+     (setq org-todo-keyword-faces
+	   '(("TODO" .   org-warning)
+	     ("BLOCK" .   (:foreground "red" :weight bold))
+	     ("DOING" .      (:foreground "orange" :weight bold))
+	     ("DONE" .      (:foreground "green" :weight bold))
+	     ("CANCELED" .     (:background "gray" :foreground "black"))
+	     ))
+     
+     ;; I prefer to log TODO creation also
+     (setq org-treat-insert-todo-heading-as-state-change t)
+     ;; enable todo logging and put in drawer
+     (setq org-log-states-order-reversed t)
+     (setq org-log-into-drawer t)
+     
+     (setq org-highest-priority ?A)
+     (setq org-lowest-priority  ?D)
+     (setq org-default-priority ?D)
+     (setq org-priority-faces
+	   '((?A . (:background "red" :foreground "white" :weight bold))
+	     (?B . (:background "DarkOrange" :foreground "white" :weight bold))
+	     (?C . (:background "yellow" :foreground "DarkGreen" :weight bold))
+	     (?D . (:background "DodgerBlue" :foreground "black" :weight bold))
+	     ))
+   #+end_src
+   goto file
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     (defun logseq/goto-today ()
+       (interactive)
+       (find-file (concat "~/logseq/journals/" (format-time-string "%Y_%m_%d.org"))))
+     
+     (defun logseq/goto-coding-diary ()
+       (interactive)
+       (find-file "~/logseq/pages/coding-diary.org"))
+     
+     (defun logseq/insert-today ()
+       (interactive)
+       (insert (format-time-string "%Y_%m_%d")))
+     
+     (defun logseq/current-time ()
+       "Insert string for the current time formatted like '22:34'."
+       (interactive)                 ; permit invocation in minibuffer
+       (insert (format-time-string "%k:%M")))
+     
+     (defun logseq/store-in-coding-diary()
+       "Insert append current link to ~/logseq/pages/coding-diary.org "
+       (interactive)
+       (counsel-M-x-action "org-store-link")
+       (let ((from (f-base (format "%s" (current-buffer))))
+	     (buffer (find-file-noselect (expand-file-name "~/logseq/pages/coding-diary.org") nil nil)))
+	 (switch-to-buffer-other-window buffer)
+	 (ingtshan append-org-link-to-buffer buffer from)))
+     ;;(setq org-agenda-files (list "~/logseq/journals"))
+   #+end_src
+   enabel reset check boxes
+   - org-checklist.el is part of org-plus-contrib (move to org-contib)
+   - Set property RESET_CHECK_BOXES on the task to t
+   - make sure org-checklist is one of the loaded modules (via variable org-modules)
+   when use, you should set property of =RESET_CHECK_BOXES= by =C-c C-x p= (same as =M-x org-set-property=)
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+     ;; (use-package org-contrib :ensure t)
+     (with-eval-after-load 'org
+       (require 'org-checklist)
+       (add-to-list 'org-modules 'org-checklist t)
+       (setq reset-check-boxes t))
+     ;;(use-package org-contrib :ensure t)
+   #+end_src
+** org-capture
+*** basic setup
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (global-set-key (kbd "C-c c") 'org-capture)
+      
+      (setq org-default-notes-file "~/logseq/pages/org-capture/inbox.org")
+      (setq org-capture-templates nil)
+    #+end_src
+*** tool function
+    - get string from clipboard
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/clipboard-org-link-string ()
+	"test and get org-link form clipboard"
+	(let ((clipboard (if kill-ring (current-kill 0 t) nil)))
+	  (if clipboard ;; check nil
+	      (if ;; check is org-link
+		  (string-match "^\\[\\[.?*\\]\\[.?*\\]\\]$" clipboard)
+		  clipboard ;; get link
+		"") ;; not org-link format return empty
+	    "") ;; clipboard empty
+	  ))
+    #+end_src
+    - for location function building
+    - complet reading
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/completing-buffer-tages-read(tage-buffer &optional prompt prefix)
+	"Get user input with tages in buffer completing"
+	(let* (;; local value initial
+	       ;; get file of buffer
+	       (file (buffer-file-name
+		      (or (buffer-base-buffer tage-buffer) tage-buffer)))
+	       ;; get tags of file
+	       (org-last-tags-completion-table
+		(org-global-tags-completion-table
+		 (list file))));; end of local value statement
+	  ;; get user input with tags completing
+	  ;; make heading unique by add prefix
+	  (concat (if prefix prefix "")
+		  (completing-read
+		   (if prompt (concat prompt ": ") "Tags: ")
+		   'org-tags-completion-function nil nil nil
+		   'org-tags-history))))
+    #+end_src
+*** locate file
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/capture-logseq-journal-file (path)
+	"format filename to logseq journal"
+	(let ((filename 
+	       (expand-file-name
+		(format "%s.org"
+			(format-time-string "%Y_%m_%d")) path)))
+	  (unless (file-exists-p filename)
+	    (with-temp-buffer (write-file filename)))
+	  filename))
+      
+      (defun ingtshan/capture-report-year-file (path file)
+	"format filename as year/file such as 2021/task.org"
+	(let ((filename 
+	       (expand-file-name
+		(format "%s/%s"
+			(format-time-string "%Y") file) path)))
+	  (unless (file-exists-p filename)
+	    (with-temp-buffer (write-file filename)))
+	  filename))
+    #+end_src
+*** locate entry
+    - locate heading
+    - locate two level tree
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/org-find-level-one-heading (heading)
+	"find level one heading of current buffer"
+	;; move point to the beginning of the buffer
+	(goto-char (point-min))
+	(unless
+	    ;; search heading
+	    (re-search-forward (concat "^\\* " heading "$")  nil t)
+	  ;; search nil move to end of the buffer and insert
+	  (goto-char (point-max))
+	  (insert (concat "\n* " heading)))
+	(end-of-line))
+      
+      (defun ingtshan/capture-task-entry-tree-two-level
+	  (heading subheading &optional todo-key begin-point property)
+	"find or create entry tree with subtree as todo iterm optional"
+	(let (;; local value list
+	      ;; the ^ anchor specifies that the following pattern
+	      ;; must begin at the first character position of the string
+	      (leve1-regex (concat "^\\* " heading "$"))
+	      ;; bypass some todo-key
+	      (leve2-regex (concat "^\\*\\* [a-zA-Z]* *\\[*#*[A-D]*\\]* *" subheading "$"))
+	      );; end
+	  ;; move point to the beginning of the buffer
+	  (goto-char (point-min))
+	  (cond
+	   ;; find or create tree
+	   ((not (re-search-forward leve1-regex nil t))
+	    ;; (message "careat whole tree")
+	    ;; add tree at end of buffer
+	    (goto-char (point-max))
+	    (insert "\n* " heading
+		    "\n** "
+		    (if todo-key (concat todo-key " " subheading) subheading)
+		    (if property (concat "\n" property) "")))
+	   ((not (re-search-forward leve2-regex nil t))
+	    ;; (message "careat leve 2")
+	    ;; reach line of heading
+	    (end-of-line)
+	    ;; insert subheading
+	    (insert "\n** "
+		    (if todo-key (concat todo-key " " subheading) subheading)
+		    (if property (concat "\n" property) "")))
+	   (t (end-of-line)))
+	  ;; reach end of line of subheading
+	  (if begin-point (unless (re-search-forward begin-point nil t)
+			    ;; create begin-point right after subheading
+			    (insert "\n   " begin-point)))
+	  ;;(unless (equal (forward-line) 0) (insert "\n"))
+	  ;;(beginning-of-line)
+	  ))
+    #+end_src
+*** locate customer entry
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/locate-month-action-list ()
+	"goto my daliy task memo entry, and check them out!"
+	(interactive)
+	(let ((subh (format-time-string "%Y-%m %B action list" )))
+	  (ingtshan/capture-task-entry-tree-two-level
+	   "杂项"
+	   subh "TODO [#C]" (concat "&" subh))))
+    #+end_src
+*** mess capture tool --diabale
+    #+begin_src emacs-lisp
+      (defun ingtshan/org-find-month-in-datetree()
+	"genera monthly tree and find out position of current date"
+	(let ((clipboard (if kill-ring (current-kill 0 t) "")))
+	  (org-datetree-find-date-create (calendar-current-date))
+	  (kill-line) ;; this will change clipboard so back and revert
+	  (kill-new clipboard)))
+      
+      (defun ingtshan/org-find-month-todo-in-datetree()
+	"goto month todo of current date in datetree"
+	(let ((headname
+	       (concat
+		(format-time-string "%B %Y")
+		" to-do list")))
+	  (org-datetree-find-month-create (calendar-current-date))
+	  (end-of-visual-line)
+	  (unless (equal (forward-line) 0) (insert "\n"))
+	  (unless (re-search-forward
+		   (format org-complex-heading-regexp-format
+			   (regexp-quote headname))  nil t)
+	    (insert (concat "*** TODO " headname "\n\n"))
+	    (forward-line))))
+      
+    #+end_src
+*** password capture tool
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/random-alphanum()
+	(let* ((charset "abcdefghijklmnopqrstuvwxyz0123456789")
+	       (x (random 36)))
+	  (char-to-string (elt charset x))))
+      
+      (defun ingtshan/create-password ()
+	(let ((value ""))
+	  (dotimes (j 3 value)
+	    (dotimes (i 5 value)
+	      (setq value (concat value (ingtshan/random-alphanum))))
+	    (setq value (concat value "-")))
+      
+	  (dotimes (i 5 value)
+	    (setq value (concat value (ingtshan/random-alphanum))))))
+      
+      (defun ingtshan/get-or-create-password ()
+	(setq password (read-string "Password: "))
+	(if (string= password "")
+	    (ingtshan/create-password)
+	  password))
+    #+end_src
+*** note capture tool
+    [[file:~/logseq/pages/org-capture/2021/note.org::*build-up log][origin code: build-up log]]
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defvar ingtshan/current-note-capture-type nil
+	"global share value of my note taking capture, for org-capture interactive")
+      
+      (defun ingtshan/org-capture-note-taking-ui()
+	(let* ((tage-buffer (org-capture-get :buffer))
+	       (file (buffer-file-name
+		      (or (buffer-base-buffer tage-buffer) tage-buffer)))
+	       (org-last-tags-completion-table
+		(org-global-tags-completion-table
+		 (list file))))
+	  (concat "*** "
+		  (cond
+		   ;; nil check
+		   ((unless ingtshan/current-note-capture-type) "%?")
+		   ;; src-snippet note template
+		   ((string-equal ingtshan/current-note-capture-type "src-snippet")
+		    (let ((lan
+			   (completing-read
+			    "language: "
+			    'org-tags-completion-function nil nil nil 'org-tags-history))
+			  (des (read-string "description: "))
+			  (link (ingtshan/clipboard-org-link-string)))
+		      (concat (format "=%s= - %s :%s:src:\n    %s\n    #+begin_src %s\n"
+				      lan des lan (format-time-string "[%F %a %R]") lan)
+			      "    %?\n    #+end_src"
+			      (if (string-equal link "")
+				  link (concat "\n    Reference\n    - " link)))))
+		   ;; tool-tips note template
+		   ((string-equal ingtshan/current-note-capture-type "tool-tips")
+		    (let ((tool
+			   (completing-read
+			    "tool: "
+			    'org-tags-completion-function nil nil nil 'org-tags-history))
+			  (tips (read-string "tips: "))
+			  (link (ingtshan/clipboard-org-link-string)))
+		      (concat
+		       (format "=%s= - %s :%s:tips:\n    %s\n"
+			       tool tips tool (format-time-string "[%F %a %R]"))
+		       "    - %?"
+		       (if (string-equal link "")
+			   link (concat "\n    Tips From\n    - " link)))))
+		   ;; concepts_info
+		   ((string-equal ingtshan/current-note-capture-type "concepts-info")
+		    (let ((concept (read-string "concept:"))
+			  (link (ingtshan/clipboard-org-link-string)))
+		      (concat
+		       (format "info - =%s= :info:\n    %s\n"
+			       concept (format-time-string "[%F %a %R]"))
+		       "    - %^{description}"
+		       (if (string-equal link "")
+			   link (concat "\n    Reference\n    - " link)))))
+		   ;; issues
+		   ((string-equal ingtshan/current-note-capture-type "issues")
+		    (let ((type
+			   (completing-read
+			    "type: "
+			    'org-tags-completion-function nil nil nil 'org-tags-history))
+			  (des (read-string "short describe: "))
+			  (link (ingtshan/clipboard-org-link-string)))
+		      (concat
+		       (format "TODO =%s= - %s :%s:issues:\n    %s\n"
+			       type des type (format-time-string "[%F %a %R]"))
+		       "    - [ ] %^{issue}%?"
+		       (if (string-equal link "")
+			   link (concat "\n    Reference\n    - " link)))))
+		   ;; default
+		   (t  "%?")))))
+    #+end_src
+*** =org-capture-templates=
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (setq org-capture-templates
+	    '(;; template list	
+	      ("a" "monthly action list" plain
+	       (file+function
+		(lambda ()
+		  (ingtshan/capture-report-year-file
+		   "~/logseq/pages/org-capture/"
+		   "task.org"))
+		ingtshan/locate-month-action-list)
+	       "   - [ ] %^{action list}%?")
+      
+	      ("n" "note" plain
+	       (file+function
+		(lambda ()
+		  (ingtshan/capture-report-year-file
+		   "~/logseq/pages/org-capture/"
+		   "note.org"))
+		(lambda ()
+		  ;; input and update note type with completing
+		  (setq ingtshan/current-note-capture-type
+			(completing-read
+			 "note type: "
+			 (list
+			  "src-snippet"
+			  "tool-tips"
+			  "concepts-info"
+			  "issues"
+			  "notes")))
+		  ;; local or create heading
+		  (ingtshan/capture-task-entry-tree-two-level
+		   ingtshan/current-note-capture-type
+		   (concat ingtshan/current-note-capture-type
+			   " " (format-time-string "%Y-%m %B")))
+		  (org-end-of-subtree)
+		  ;; fix C-c C-k quit org-captue delete content
+		  ;; abort while read-string will insert blank
+		  ;; but next time excute capture while "trim" it
+		  (insert "\n")))
+	       "%(ingtshan/org-capture-note-taking-ui)")
+      
+	      ("t" "I-task" plain
+	       (file+function
+		(lambda ()
+		  (ingtshan/capture-report-year-file
+		   "~/logseq/pages/org-capture/"
+		   "task.org"))
+		(lambda ()
+		  (ingtshan/org-find-level-one-heading
+		   (ingtshan/completing-buffer-tages-read
+		    (org-capture-get :buffer) "Task Type" "I-"))
+		  (org-end-of-subtree)
+		  ;; fix C-c C-k quit org-captue delete content
+		  ;; abort while read-string will insert blank
+		  ;; but next time excute capture while "trim" it
+		  (insert "\n")))
+	       "** TODO %^{Task}\n   SCHEDULED: %T\n   - [ ] %?")
+      
+	      ("h" "hack emacs" plain
+	       (file+function
+		(lambda ()
+		  (ingtshan/capture-report-year-file
+		   "~/logseq/pages/org-capture/"
+		   "task.org"))
+		(lambda ()
+		  (ingtshan/capture-task-entry-tree-two-level
+		   "爱好"
+		   "Hack Emacs" "TODO [#D]" "&Hack Emacs Action list")))
+	       "   - [ ] %^{hack what}%?")
+      
+	      ("p" "save passwords" entry
+	       (file "~/logseq/pages/org-capture/passwords.org.cpt")
+	       "* %U - %^{title} %^G\n\n  - 用户名: %^{用户名}\n  - 密码: %(ingtshan/get-or-create-password)"
+	       :empty-lines 1 :kill-buffer t)
+	      ))
+    #+end_src
+** org-agenda and dashboard
+*** basic setup
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (setup (:package dashboard))
+      (setup (:package page-break-lines))
+    #+end_src
+
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init.el
+      (with-eval-after-load 'org
+	(require 'org-habit)
+	(add-to-list 'org-modules 'org-habit t)
+	(setc user-full-name "ingtshan"
+	      user-mail-address "address@hidden"
+	      org-habit-show-only-for-today t
+	      org-habit-show-done-always-green t
+      
+	      org-directory
+	      (expand-file-name "~/logseq/pages/org-capture/")
+      
+	      org-agenda-files
+	      (directory-files-recursively
+	       (expand-file-name "~/logseq/pages/org-capture/") "\\.org$")))
+      
+      
+      (add-hook 'after-init-hook #'page-break-lines-mode)
+      
+      (setup dashboard
+	(dashboard-setup-startup-hook)
+	(:option dashboard-banner-logo-title "welcom back!"
+		 dashboard-center-content t
+		 dashboard-set-heading-icons t
+		 dashboard-set-navigator t))
+      
+      (global-set-key (kbd "H-g h")
+		      #'(lambda () (interactive)
+			  (switch-to-buffer "*dashboard*")))
+      
+      (console-log "dashboard inited!")
+      ;;     (setq org-agenda-text-search-extra-files
+      ;;	   '(agenda-archives
+      ;;	     "~/org/subdir/textfile1.txt"
+      ;;	     ))
+    #+end_src
+    -- maybe someday
+    #+begin_src emacs-lisp
+      ;; Emacs 和 Org mode 的启动优化？ https://emacs-china.org/t/emacs-org-mode/2621/5
+      (setq ingtshan-agenda-timer/loading-agenda-file
+	    (run-with-idle-timer
+	     10
+	     t
+	     #'(lambda()
+		 ;; run only one time
+		 (cancel-timer ingtshan-agenda-timer/loading-agenda-file)
+		 ;; check had agenda command run
+		 (unless org-agenda-redo-command
+		   ;; manually load agenda files
+		   (message "[ingtshan] auto load agenda files")
+		   (progn 
+		     (require 'org-agenda)
+		     ;; check file
+		     (dolist (f org-agenda-files)
+		       (cond ;; check file load or delete from list
+			((file-exists-p f) (org-check-agenda-file f))
+			(t (setq org-agenda-files (delete f org-agenda-files))))))
+		   ;; view agenda in new frame
+		   (message "[ingtshan] view agenda in new frame")
+		   (progn
+		     (switch-to-buffer-other-frame "*Org Agenda*")
+		     (ingtshan/pop-new-frame)
+		     (org-agenda nil "n")))
+		 ;; end of lambda of timer
+		 )))
+    #+end_src
+*** goto agenda task shortcut
+    - daliy memo
+    - month action list
+    #+begin_src emacs-lisp :tangle .local/.emacs.d/init-dump.el
+      (defun ingtshan/goto-daliy-task ()
+	"goto my daliy task memo entry, and check them out!"
+	(interactive)
+	(find-file
+	 (ingtshan/capture-report-year-file
+	  "~/logseq/pages/org-capture" "task.org"))
+	(ingtshan/capture-task-entry-tree-two-level
+	 "日常" "日常/备忘" "TODO" "&daliy")
+	(org-overview)
+	(org-reveal t)
+	(org-show-entry))
+      
+      (global-set-key (kbd "H-g d") 'ingtshan/goto-daliy-task)
+      (global-set-key (kbd "H-g a") #'(lambda ()
+					(interactive)
+					(find-file
+					 (ingtshan/capture-report-year-file
+					  "~/logseq/pages/org-capture"
+					  "task.org"))
+					(ingtshan/locate-month-action-list)
+					(org-overview)
+					(org-reveal t)
+					(org-show-entry)))
+    #+end_src
+** org my shortcut
+   - org mode shortcut at [[*Org][Org]]
+* Load custom file
+  load auto custom variables --disable
+  #+begin_src emacs-lisp .local/.emacs.d/init.el
+    (setq custom-file "~/.emacs.d/auto-custom-vars.el")
+    (when (file-exists-p custom-file)
+      (load-file custom-file))
+  #+end_src
+* Multi-device
+** default
+   default setup
+   - window position
+   - font
+   #+begin_src emacs-lisp :mkdirp yes :tangle .local/.emacs.d/multi-device/default.el
+     (set-frame-position (selected-frame) 0 0)
+     (set-frame-width (selected-frame) 88)
+     (set-frame-height (selected-frame) 40)
+     (set-frame-font "Monaco 14" nil t)
+   #+end_src
+** superme
+   Setup after init
+   - window size
+   - font
+   #+begin_src emacs-lisp :mkdirp yes :tangle .local/.emacs.d/multi-device/superme.el
+     (set-frame-width (selected-frame) 130)
+     (set-frame-height (selected-frame) 80)
+     ;; Auto generated by cnfonts
+     ;; <https://github.com/tumashu/cnfonts>
+     (set-face-attribute
+      'default nil
+      :font (font-spec :name "-*-Monaco-normal-normal-normal-*-*-*-*-*-m-0-iso10646-1"
+		       :weight 'normal
+		       :slant 'normal
+		       :size 16))
+     (dolist (charset '(kana han symbol cjk-misc bopomofo))
+       (set-fontset-font
+	(frame-parameter nil 'font)
+	charset
+	(font-spec :name "-*-HYKaiTiJ-normal-normal-normal-*-*-*-*-*-p-0-iso10646-1"
+		   :weight 'normal
+		   :slant 'normal
+		   :size 20)))
+   #+end_src
+   Window move
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/multi-device/superme.el
+     (defun ingtshan/move-right()
+       "Move current flame to right of screen with resized"
+       (interactive)
+       (set-frame-position (selected-frame) 2760 -540)
+       (set-frame-width (selected-frame) 40)
+       (set-frame-height (selected-frame) 80))
+     
+     (defun ingtshan/move-left()
+       "Move current flame to right of screen with resized"
+       (interactive)
+       (set-frame-position (selected-frame) 1025 0)
+       (set-frame-width (selected-frame) 40)
+       (set-frame-height (selected-frame) 60))
+     
+     (defun ingtshan/move-back()
+       "Move current flame to origin with resized"
+       (interactive)
+       (set-frame-position (selected-frame) 1440 -540)
+       (set-frame-width (selected-frame) 130)
+       (set-frame-height (selected-frame) 80))
+     
+     (defun ingtshan/pop-new-frame()
+       "Move current flame to origin with resized"
+       (set-frame-position (selected-frame) 1640 -1000))
+   #+end_src
+   Emacs-log move left
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/multi-device/superme.el
+     (defun ingtshan/emacs-log-move-left-buffer-change ()
+       (remove-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-move-left-buffer-change t)
+       (switch-to-buffer-other-frame "*Emacs Log*")
+       (ingtshan/move-left))
+     
+     (defun ingtshan/emacs-log-move-left()
+       "Open Log buffer and maxmix then move left"
+       (interactive)
+       (let ((buffer "*Emacs Log*"))
+	 (cond ((not (get-buffer "*Emacs Log*"))
+		(add-hook 'ilog-log-buffer-mode-hook #'ingtshan/emacs-log-move-left-buffer-change)
+		(counsel-M-x-action "interaction-log-mode"))
+	       (t
+		(switch-to-buffer-other-frame buffer)
+		(ingtshan/move-left)))))
+   #+end_src
+*** LaTeX --disabled
+    Optional
+    - For full function of org-mode LaTex You must install mactex in your osx using ~brew install --cask mactex~
+
+    Install auctex
+    #+begin_src emacs-lisp
+      (unless (package-installed-p 'auctex)
+	(package-install 'auctex)
+	)
+    #+end_src
+    Initialize latex mode (based on auctex)
+    - auto save
+    - parse self (used for multi file project)
+    - no auto master file
+    #+begin_src emacs-lisp
+      (setq TeX-auto-save t)
+      (setq TeX-parse-self t)
+      (setq-default TeX-master nil)
+    #+end_src
+    LaTeX env
+    #+begin_src emacs-lisp
+      (defun latex/change-env ()
+	(interactive)
+	(LaTeX-environment t))
+      (defun latex/font-bold () (interactive) (TeX-font nil ?\C-b))
+      (defun latex/font-code () (interactive) (TeX-font nil ?\C-t))
+      (defun latex/font-emphasis () (interactive) (TeX-font nil ?\C-e))
+      (defun latex/font-italic () (interactive) (TeX-font nil ?\C-i))
+      (defun latex/font-clear () (interactive) (TeX-font nil ?\C-d))
+      (defun latex/font-oblique () (interactive) (TeX-font nil ?\C-s))
+    #+end_src
+** pokeball
+   Setup after init
+   - window size
+   - font
+   #+begin_src emacs-lisp :mkdirp yes :tangle .local/.emacs.d/multi-device/pokeball.el
+     (set-frame-width (selected-frame) 100)
+     (set-frame-height (selected-frame) 42)
+     ;; Auto generated by cnfonts
+     ;; <https://github.com/tumashu/cnfonts>
+     (when window-system
+       (set-face-attribute
+	'default nil
+	:font (font-spec :name "-*-Monaco-normal-normal-normal-*-*-*-*-*-m-0-iso10646-1"
+			 :weight 'normal
+			 :slant 'normal
+			 :size 16))
+       (dolist (charset '(kana han symbol cjk-misc bopomofo))
+	 (set-fontset-font
+	  (frame-parameter nil 'font)
+	  charset
+	  (font-spec :name "-*-HYKaiTiJ-normal-normal-normal-*-*-*-*-*-p-0-iso10646-1"
+		     :weight 'normal
+		     :slant 'normal
+		     :size 20))))
+   #+end_src
+   Startup list
+   - emacs-log --disable
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/multi-device/pokeball.el
+     ;; (add-hook 'emacs-startup-hook #'ingtshan/emacs-log-start)
+   #+end_src
+   Window move
+   #+begin_src emacs-lisp :tangle .local/.emacs.d/multi-device/pokeball.el
+     (defun ingtshan/move-right()
+       "Move current flame to right of screen with resized"
+       (interactive)
+       (set-frame-position (selected-frame) 818 0)
+       (set-frame-width (selected-frame) 32)
+       (set-frame-height (selected-frame) 42))
+     
+     (defun ingtshan/move-back()
+       "Move current flame to origin with resized"
+       (interactive)
+       (set-frame-position (selected-frame) 0 0)
+       (set-frame-width (selected-frame) 100)
+       (set-frame-height (selected-frame) 42))
+     
+     (defun ingtshan/pop-new-frame()
+       "Move current flame to origin with resized"
+       (set-frame-position (selected-frame) 100 30)
+       (set-frame-width (selected-frame) 75)
+       (set-frame-height (selected-frame) 32))
+  #+end_src
+
+

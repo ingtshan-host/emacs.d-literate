@@ -1,13 +1,11 @@
 * Emacs configuration All in Org
 
+It is my personal practice (Literate programming trying on setup Emacs configuration.), full of messy codes and documents.
+
 Use org-babel-tangle to convert org into several elisp file, which content the codes of code block to init my emacs.
 
-** How to use?
+If you want to check anyway, here is three version of it.
 
-Install Emacs
+ For the basic org-babel-tangle usage in config Emacs check [config.org](./config.org)
 
-#+BEGIN_SRC shell
-  $ git clone git@github.com:ingtshan/emacs-configuration-in-org.git ~/.emacs.d
-#+END_SRC
-
-Launch Emacs ;-)
+ For document editor use, check [emacs.org][./emacs.org] and [doom-emacs.org]
